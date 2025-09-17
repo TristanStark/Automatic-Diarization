@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.dist-info/
+*.egg-info/
+
+# Tools
+.ruff_cache/
+.pytest_cache/
+
+# Project data
+.env
+voice_db.json
+voice_db/
+datas/
+to_class/
+*.mp3
+*.mkv
+*.txt
