@@ -39,10 +39,26 @@ aai.settings.http_timeout = 600
 
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-CLASSIFIER = EncoderClassifier.from_hparams(
-    source="speechbrain/spkrec-ecapa-voxceleb",
-    run_opts={"device": DEVICE}
-)
+_TEST_MODE = os.getenv("DIARIZATION_TEST_MODE", "0") == "1"
+CLASSIFIER = None
+
+def _get_classifier():
+    global CLASSIFIER
+    if CLASSIFIER is None:
+        if _TEST_MODE:
+            class _Fake:
+                def encode_batch(self, wav):
+                    import numpy as _np
+                    import torch as _torch
+                    return _torch.from_numpy(_np.ones((1,192), dtype=_np.float32))
+            return _Fake()
+        CLASSIFIER = EncoderClassifier.from_hparams(
+            source="speechbrain/spkrec-ecapa-voxceleb",
+            run_opts={"device": DEVICE}
+        )
+    return CLASSIFIER
+
+
 
 def _load_wav_mono_16k(path: str) -> torch.Tensor:
     wav, sr = torchaudio.load(path)           # (channels, time)
@@ -138,6 +154,8 @@ def get_embedding(path: str) -> np.ndarray:
     emb = emb.squeeze()                             # enlève les dims de taille 1
     emb = emb.detach().cpu().numpy()
     emb = np.asarray(emb, dtype=np.float32).ravel() # -> (192,)
+    wav = _load_wav_mono_16k(path)                  # (1, time)
+    emb = _get_classifier().encode_batch(wav)              # (batch, 192) ou (batch, 1, 192)
     return emb
 
 def build_similarity_matrix(sample_paths: dict[str, str],
