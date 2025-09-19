@@ -18,3 +18,7 @@ to_class/
 *.mp3
 *.mkv
 *.txt
+
+voice_db/
+to_class/
+datas/

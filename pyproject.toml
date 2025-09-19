@@ -21,6 +21,15 @@ dependencies = [
   "pytest-mock>=3.14",
 ]
 
+[tool.setuptools]
+# On déclare explicitement qu'on publie un seul module (diarization.py)
+py-modules = ["diarization"]
+
+[tool.setuptools.packages.find]
+include = []
+exclude = ["voice_db", "to_class", "datas", "tests", ".github"]
+
+
 [tool.ruff]
 line-length = 100
 select = ["E","F","I","UP","B","C4","PIE","RET","SIM","TID","PL"]
