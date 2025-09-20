@@ -1,22 +1,24 @@
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+from pathlib import Path
+
 import assemblyai as aai
 import ffmpeg
-import time
-import subprocess
-import os
-import json
-import torchaudio
-import torch
 import numpy as np
-from speechbrain.pretrained import EncoderClassifier
-from scipy.spatial.distance import cosine
-import sys
-from pathlib import Path
-import re
-from scipy.optimize import linear_sum_assignment
+import torch
+import torchaudio
 from dotenv import load_dotenv
+from scipy.optimize import linear_sum_assignment
+from scipy.spatial.distance import cosine
+from speechbrain.pretrained import EncoderClassifier
+
 load_dotenv()
 
-
+CONST_16000 = 16000
 
 TOKEN = os.getenv("AAI_API_KEY")
 VOICE_DB_FILE = "voice_db.json"
@@ -40,32 +42,29 @@ aai.settings.http_timeout = 600
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 _TEST_MODE = os.getenv("DIARIZATION_TEST_MODE", "0") == "1"
-CLASSIFIER = None
 
 def _get_classifier():
-    global CLASSIFIER
-    if CLASSIFIER is None:
-        if _TEST_MODE:
-            class _Fake:
-                def encode_batch(self, wav):
-                    import numpy as _np
-                    import torch as _torch
-                    return _torch.from_numpy(_np.ones((1,192), dtype=_np.float32))
-            return _Fake()
-        CLASSIFIER = EncoderClassifier.from_hparams(
-            source="speechbrain/spkrec-ecapa-voxceleb",
-            run_opts={"device": DEVICE}
-        )
-    return CLASSIFIER
+    if _TEST_MODE:
+        class _Fake:
+            def encode_batch(self, wav):
+                import numpy as _np
+                import torch as _torch
+                return _torch.from_numpy(_np.ones((1,192), dtype=_np.float32))
+        return _Fake()
+    return EncoderClassifier.from_hparams(
+        source="speechbrain/spkrec-ecapa-voxceleb",
+        run_opts={"device": DEVICE}
+    )
 
 
+CLASSIFIER = _get_classifier()
 
 def _load_wav_mono_16k(path: str) -> torch.Tensor:
     wav, sr = torchaudio.load(path)           # (channels, time)
     if wav.shape[0] > 1:
         wav = torch.mean(wav, dim=0, keepdim=True)  # mono
-    if sr != 16000:
-        wav = torchaudio.functional.resample(wav, sr, 16000)
+    if sr != CONST_16000:
+        wav = torchaudio.functional.resample(wav, sr, CONST_16000)
     return wav
 
 
@@ -155,8 +154,7 @@ def get_embedding(path: str) -> np.ndarray:
     emb = emb.detach().cpu().numpy()
     emb = np.asarray(emb, dtype=np.float32).ravel() # -> (192,)
     wav = _load_wav_mono_16k(path)                  # (1, time)
-    emb = _get_classifier().encode_batch(wav)              # (batch, 192) ou (batch, 1, 192)
-    return emb
+    return _get_classifier().encode_batch(wav)              # (batch, 192) ou (batch, 1, 192)
 
 def build_similarity_matrix(sample_paths: dict[str, str],
                             db: dict[str, np.ndarray],
@@ -202,7 +200,7 @@ def assign_speakers_hungarian(sim: np.ndarray, speakers: list[str], names: list[
     row_ind, col_ind = linear_sum_assignment(cost)  # indices des paires optimales
 
     mapping: dict[str, tuple[str | None, float]] = {}
-    for r, c in zip(row_ind, col_ind):
+    for r, c in zip(row_ind, col_ind, strict=False):
         spk = speakers[r]
         name = names[c]
         s = float(sim[r, c])
@@ -244,7 +242,7 @@ def build_voice_db(db_dir: str, out_json="voice_db.json"):
     print(f"[OK] Base vocale écrite: {out_json} ({len(voice_db)} personnes)")
 
 def load_voice_db(db_json: str = "voice_db.json") -> dict:
-    with open(db_json, "r", encoding="utf-8") as r:
+    with open(db_json, encoding="utf-8") as r:
         db = json.load(r)
     # force 1D
     for k, v in db.items():
@@ -323,7 +321,7 @@ if __name__ == "__main__":
 
     # 8) Renommage des fichiers et mapping final pour l'écriture
     matched_speakers = {}  # {speaker_id: nom_affiché}
-    for spk, (name, s) in mapping.items():
+    for spk, (name, _) in mapping.items():
         if name is not None:
             new_name = f"./to_class/{name}_{episode_name}.mp3"
             try:

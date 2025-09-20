@@ -1,7 +1,7 @@
 import os
 import wave
-import contextlib
 from pathlib import Path
+
 
 def _write_silence_wav(path: Path, seconds=0.2, sr=16000):
     import numpy as np

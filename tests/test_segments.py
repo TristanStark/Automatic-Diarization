@@ -1,8 +1,13 @@
-import os
-import json
-import numpy as np
-from pathlib import Path
 import importlib
+import json
+import os
+from pathlib import Path
+
+import numpy as np
+
+CONST_500 = 500
+CONST_1500 = 1500
+CONST_NB_CHANNELS = 192
 
 def test_build_voice_db_and_similarity(tmp_path, monkeypatch):
     diar = importlib.import_module("diarization")
@@ -12,11 +17,11 @@ def test_build_voice_db_and_similarity(tmp_path, monkeypatch):
         diar.build_voice_db(os.getenv("VOICE_DB_DIR", "./voice_db"), out_json=db_json)
 
     assert Path(db_json).exists()
-    with open(db_json, "r", encoding="utf-8") as r:
+    with open(db_json, encoding="utf-8") as r:
         db = json.load(r)
     assert set(db.keys()) >= {"Alice", "Bob"}
     # vecteurs (192,)
-    assert len(np.asarray(db["Alice"]).ravel()) == 192
+    assert len(np.asarray(db["Alice"]).ravel()) == CONST_NB_CHANNELS
 
     # Matrice de similarité sur des samples factices
     samples = {"S1": "voice_db/Alice_1.wav", "S2": "voice_db/Bob_1.wav"}
@@ -31,5 +36,5 @@ def test_calculate_longest_segment_simple():
         "B": [{"start": 0, "end": 500}],
     }
     longest = calculate_longest_segment(speakers)
-    assert longest["A"]["end"] - longest["A"]["start"] == 1500
-    assert longest["B"]["end"] - longest["B"]["start"] == 500
+    assert longest["A"]["end"] - longest["A"]["start"] == CONST_1500
+    assert longest["B"]["end"] - longest["B"]["start"] == CONST_500
