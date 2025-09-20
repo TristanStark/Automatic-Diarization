@@ -8,16 +8,15 @@ from pathlib import Path
 
 import assemblyai as aai
 import ffmpeg
+import numpy as _np
 import numpy as np
 import torch
+import torch as _torch
 import torchaudio
 from dotenv import load_dotenv
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cosine
 from speechbrain.pretrained import EncoderClassifier
-import numpy as _np
-import torch as _torch
-
 
 load_dotenv()
 

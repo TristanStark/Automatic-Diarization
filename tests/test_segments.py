@@ -2,9 +2,10 @@ import importlib
 import json
 import os
 from pathlib import Path
-from diarization import calculate_longest_segment
 
 import numpy as np
+
+from diarization import calculate_longest_segment
 
 CONST_500 = 500
 CONST_1500 = 1500
