@@ -2,6 +2,7 @@ import importlib
 import json
 import os
 from pathlib import Path
+from diarization import calculate_longest_segment
 
 import numpy as np
 
@@ -30,7 +31,6 @@ def test_build_voice_db_and_similarity(tmp_path, monkeypatch):
     assert set(speakers) == {"S1", "S2"}
 
 def test_calculate_longest_segment_simple():
-    from diarization import calculate_longest_segment
     speakers = {
         "A": [{"start": 0, "end": 1000}, {"start": 1000, "end": 2500}],
         "B": [{"start": 0, "end": 500}],

@@ -15,6 +15,9 @@ from dotenv import load_dotenv
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cosine
 from speechbrain.pretrained import EncoderClassifier
+import numpy as _np
+import torch as _torch
+
 
 load_dotenv()
 
@@ -47,8 +50,6 @@ def _get_classifier():
     if _TEST_MODE:
         class _Fake:
             def encode_batch(self, wav):
-                import numpy as _np
-                import torch as _torch
                 return _torch.from_numpy(_np.ones((1,192), dtype=_np.float32))
         return _Fake()
     return EncoderClassifier.from_hparams(

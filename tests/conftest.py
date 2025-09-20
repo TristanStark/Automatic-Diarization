@@ -1,10 +1,10 @@
 import os
 import wave
 from pathlib import Path
+import numpy as np
 
 
 def _write_silence_wav(path: Path, seconds=0.2, sr=16000):
-    import numpy as np
     n_frames = int(seconds * sr)
     data = (np.zeros(n_frames)).astype("int16").tobytes()
     with wave.open(str(path), "wb") as wf:
