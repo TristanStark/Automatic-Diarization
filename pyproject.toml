@@ -21,6 +21,14 @@ dependencies = [
   "pytest-mock>=3.14",
 ]
 
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.6.9",
+  "pytest",
+  "pytest-mock",
+]
+
 [tool.setuptools]
 # On déclare explicitement qu'on publie un seul module (diarization.py)
 py-modules = ["diarization"]

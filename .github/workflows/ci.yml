@@ -17,10 +17,13 @@ jobs:
       - name: Install system deps
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
+      - name: Install ruff
+        run: pip install ruff
+
       - name: Install project
         run: |
           python -m pip install --upgrade pip
-          pip install -e .
+          pip install -e .[dev]
 
       - name: Lint
         run: ruff check .
